@@ -94,7 +94,7 @@ float LinuxParser::MemoryUtilization() {
 
   return 1.0 - float(free_memory) / total_memory;
 }
- 
+
 long LinuxParser::UpTime() {
   /* Read and return the system uptime. */
 
@@ -125,8 +125,32 @@ long LinuxParser::ActiveJiffies() { return 0; }
 // TODO: Read and return the number of idle jiffies for the system
 long LinuxParser::IdleJiffies() { return 0; }
 
-// TODO: Read and return CPU utilization
-vector<string> LinuxParser::CpuUtilization() { return {}; }
+vector<long> LinuxParser::CpuUtilization() {
+  /* Read and return the raw data of CPU utilization.
+   * return: a vector of size 10, representing the jiffies by (user,
+   * nice, system, idle, IOWait, irq, softIrq, steal, guest, guestNice)
+   */
+
+  // 105850 5982 28218 1517280 6375 0 2972 0 0 0
+  
+  const int kReturnSize = 10;
+  vector<long> cpu_utlization_data;
+  std::string line;
+  std::ifstream filestream(kProcDirectory + kStatFilename);
+  if (filestream.is_open()) {
+    std::getline(filestream, line);
+    std::istringstream linestream(line);
+    std::string value;
+    linestream >> value;  // take in the string "cpu"
+  
+    for (int i = 0; i < kReturnSize; i++){
+       linestream >> value;
+       cpu_utlization_data.emplace_back(std::stoi(value));
+    }
+  }
+
+  return cpu_utlization_data;
+}
 
 int LinuxParser::TotalProcesses() {
   /* Read and return the total number of processes. */
@@ -137,7 +161,7 @@ int LinuxParser::TotalProcesses() {
 
   if (filestream.is_open()) {
     while (std::getline(filestream, line)) {
-      if (line.substr(0, kKey.length()) == kKey){
+      if (line.substr(0, kKey.length()) == kKey) {
         std::istringstream linestream(line);
         string temp;
         string value;
@@ -159,7 +183,7 @@ int LinuxParser::RunningProcesses() {
 
   if (filestream.is_open()) {
     while (std::getline(filestream, line)) {
-      if (line.substr(0, kKey.length()) == kKey){
+      if (line.substr(0, kKey.length()) == kKey) {
         std::istringstream linestream(line);
         string temp;
         string value;
