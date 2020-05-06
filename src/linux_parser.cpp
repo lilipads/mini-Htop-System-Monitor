@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <dirent.h>
 #include <unistd.h>
 #include <string>
@@ -68,8 +69,30 @@ vector<int> LinuxParser::Pids() {
   return pids;
 }
 
-// TODO: Read and return the system memory utilization
-float LinuxParser::MemoryUtilization() { return 0.0; }
+float LinuxParser::MemoryUtilization() {
+  /* read and return the system memory utilization, defined as
+     1 - free_memory / total_memory
+  */
+
+  std::ifstream filestream(kProcDirectory + kMeminfoFilename);
+
+  string line, key;
+  std::istringstream linestream;
+  int total_memory, free_memory;
+
+  assert(filestream.is_open());
+  // first line example - MemTotal:    12341 KB
+  std::getline(filestream, line);
+  linestream.str(line);
+  linestream >> key >> total_memory;
+
+  // second line example - MemFree:    1234KB
+  std::getline(filestream, line);
+  linestream.str(line);
+  linestream >> key >> free_memory;
+
+  return 1.0 - float(free_memory) / total_memory;
+}
 
 // TODO: Read and return the system uptime
 long LinuxParser::UpTime() { return 0; }
@@ -91,7 +114,10 @@ long LinuxParser::IdleJiffies() { return 0; }
 vector<string> LinuxParser::CpuUtilization() { return {}; }
 
 // TODO: Read and return the total number of processes
-int LinuxParser::TotalProcesses() { return 0; }
+int LinuxParser::TotalProcesses() {
+  std::ifstream filestream(kProcDirectory + kMeminfoFilename);
+  return 0;
+}
 
 // TODO: Read and return the number of running processes
 int LinuxParser::RunningProcesses() { return 0; }

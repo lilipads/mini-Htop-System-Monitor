@@ -10,13 +10,13 @@ inline string ToStringWithPadding(int time) {
 
 string Format::ElapsedTime(long seconds) {
   /* returns a string in the format of HH:MM:SS */
-  const int SecondsInAnHour = 3600;
-  const int SecondsInAMinute = 60;
+  const int kSecondsInAnHour = 3600;
+  const int kSecondsInAMinute = 60;
 
-  int hour = seconds / SecondsInAnHour;
-  seconds -= hour * SecondsInAnHour;
-  int minute = seconds / SecondsInAMinute;
-  seconds -= minute * SecondsInAMinute;
+  int hour = seconds / kSecondsInAnHour;
+  seconds -= hour * kSecondsInAnHour;
+  int minute = seconds / kSecondsInAMinute;
+  seconds -= minute * kSecondsInAMinute;
 
   return ToStringWithPadding(hour) + ':' + ToStringWithPadding(minute) + ":" +
          ToStringWithPadding(seconds);
