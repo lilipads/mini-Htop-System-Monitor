@@ -56,16 +56,23 @@ enum CPUStates {
   kGuestNice_
 };
 std::vector<long> CpuUtilization();
-long Jiffies();
-long ActiveJiffies();
-long ActiveJiffies(int pid);
-long IdleJiffies();
 
 // Processes
 std::string Command(int pid);
 std::string Ram(int pid);
 int Uid(int pid);
-long int UpTime(int pid);
+
+struct ProcessCpuUtilizationData{
+  /* every thing in the unit of clock ticks. */
+
+  long int user_time = 0;
+  long int system_time = 0;
+  long int children_user_time = 0;
+  long int children_system_time = 0;
+  long int start_time = 0;
+};
+
+ProcessCpuUtilizationData ProcessCpuUtilization(int pid);
 };  // namespace LinuxParser
 
 #endif

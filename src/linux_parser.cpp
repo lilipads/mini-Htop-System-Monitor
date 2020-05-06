@@ -1,4 +1,3 @@
-#include <assert.h>
 #include <dirent.h>
 #include <unistd.h>
 #include <string>
@@ -139,19 +138,6 @@ long LinuxParser::UpTime() {
   return -1;
 }
 
-// TODO: Read and return the number of jiffies for the system
-long LinuxParser::Jiffies() { return 0; }
-
-// TODO: Read and return the number of active jiffies for a PID
-// REMOVE: [[maybe_unused]] once you define the function
-long LinuxParser::ActiveJiffies(int pid[[maybe_unused]]) { return 0; }
-
-// TODO: Read and return the number of active jiffies for the system
-long LinuxParser::ActiveJiffies() { return 0; }
-
-// TODO: Read and return the number of idle jiffies for the system
-long LinuxParser::IdleJiffies() { return 0; }
-
 vector<long> LinuxParser::CpuUtilization() {
   /* Read and return the raw data of CPU utilization.
    * return: a vector of size 10, representing the jiffies by (user,
@@ -262,31 +248,42 @@ void LinuxParser::UserLookupService::BuildUserLookupTable() {
 }
 
 string LinuxParser::UserLookupService::User(int uid) {
+  /* given uid, return user name. */
+
+  // if not found in cached hashmap, refresh the map once (maybe new users
+  // registered while the program is running)
+  if (user_lookup_table.find(uid) == user_lookup_table.end())
+    BuildUserLookupTable();
+  else
+    return user_lookup_table[uid];
+
   if (user_lookup_table.find(uid) != user_lookup_table.end())
     return user_lookup_table[uid];
 
-  // if not found, refresh the map once (maybe new users registered while the
-  // program
-  //  is running)
-  BuildUserLookupTable();
-  if (user_lookup_table.find(uid) != user_lookup_table.end())
-    return user_lookup_table[uid];
-  else
-    return string();
+  return string();  // fallback value if the user is still not found
 }
 
-long LinuxParser::UpTime(int pid) {
-  /* Read and return the uptime of a process (unit: second). */
-
+LinuxParser::ProcessCpuUtilizationData LinuxParser::ProcessCpuUtilization(int pid){
   std::ifstream filestream(kProcDirectory + to_string(pid) + kStatFilename);
-  const int uptime_stat_index = 21;
-  string line, uptime_value;
+  /* parse the process stat data. 
+     see http://man7.org/linux/man-pages/man5/proc.5.html */
+
+  ProcessCpuUtilizationData data;
+
+  string line, value;
   if (filestream.is_open()) {
     std::getline(filestream, line);
     std::istringstream linestream(line);
-    for (int i = 0; i <= uptime_stat_index; i++) linestream >> uptime_value;
-    // uptime is measured in clock ticks. converting to seconds.
-    return stol(uptime_value) / sysconf(_SC_CLK_TCK);
+    for (int i = 0; i <= 21; i++){
+      linestream >> value;
+      switch (i){
+        case 13: data.user_time = stol(value); break;
+        case 14: data.system_time = stol(value); break;
+        case 15: data.children_user_time = stol(value); break;
+        case 16: data.children_system_time = stol(value); break;
+        case 21: data.start_time = stol(value); break;
+      }
+    }
   }
-  return 0;
+  return data;
 }
