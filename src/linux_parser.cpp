@@ -130,7 +130,7 @@ vector<long> LinuxParser::CpuUtilization() {
    * return: a vector of size 10, representing the jiffies by (user,
    * nice, system, idle, IOWait, irq, softIrq, steal, guest, guestNice)
    */
-  
+
   const int kReturnSize = 10;
   vector<long> cpu_utlization_data;
   std::string line;
@@ -140,10 +140,10 @@ vector<long> LinuxParser::CpuUtilization() {
     std::istringstream linestream(line);
     std::string value;
     linestream >> value;  // take in the string "cpu"
-  
-    for (int i = 0; i < kReturnSize; i++){
-       linestream >> value;
-       cpu_utlization_data.emplace_back(std::stoi(value));
+
+    for (int i = 0; i < kReturnSize; i++) {
+      linestream >> value;
+      cpu_utlization_data.emplace_back(std::stoi(value));
     }
   }
 
@@ -194,9 +194,14 @@ int LinuxParser::RunningProcesses() {
   return -1;
 }
 
-// TODO: Read and return the command associated with a process
-// REMOVE: [[maybe_unused]] once you define the function
-string LinuxParser::Command(int pid[[maybe_unused]]) { return string(); }
+string LinuxParser::Command(int pid) {
+  /* Read and return the command associated with a process. */
+
+  std::ifstream filestream(kProcDirectory + to_string(pid) + kCmdlineFilename);
+  std::string line;
+  if (filestream.is_open()) std::getline(filestream, line);
+  return line;
+}
 
 // TODO: Read and return the memory used by a process
 // REMOVE: [[maybe_unused]] once you define the function

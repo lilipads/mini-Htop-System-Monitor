@@ -10,6 +10,9 @@ inline string ToStringWithPadding(int time) {
 
 string Format::ElapsedTime(long seconds) {
   /* returns a string in the format of HH:MM:SS */
+
+  if (seconds < 0) return "00:00:00";  // fallback for invalid input
+
   const int kSecondsInAnHour = 3600;
   const int kSecondsInAMinute = 60;
 
