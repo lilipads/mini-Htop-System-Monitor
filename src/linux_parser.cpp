@@ -130,8 +130,6 @@ vector<long> LinuxParser::CpuUtilization() {
    * return: a vector of size 10, representing the jiffies by (user,
    * nice, system, idle, IOWait, irq, softIrq, steal, guest, guestNice)
    */
-
-  // 105850 5982 28218 1517280 6375 0 2972 0 0 0
   
   const int kReturnSize = 10;
   vector<long> cpu_utlization_data;
