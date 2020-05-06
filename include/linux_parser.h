@@ -4,6 +4,7 @@
 #include <fstream>
 #include <regex>
 #include <string>
+#include <unordered_map>
 
 namespace LinuxParser {
 // Paths
@@ -30,6 +31,17 @@ int RunningProcesses();
 std::string OperatingSystem();
 std::string Kernel();
 
+// a class to help user look up given uid
+class UserLookupService{
+  public:
+  UserLookupService(){BuildUserLookupTable();};
+  std::string User(int uid);
+
+  private:
+  void BuildUserLookupTable();
+  std::unordered_map<int, std::string> user_lookup_table;
+};
+
 // CPU
 enum CPUStates {
   kUser_ = 0,
@@ -52,8 +64,7 @@ long IdleJiffies();
 // Processes
 std::string Command(int pid);
 std::string Ram(int pid);
-std::string Uid(int pid);
-std::string User(int pid);
+int Uid(int pid);
 long int UpTime(int pid);
 };  // namespace LinuxParser
 

@@ -14,9 +14,11 @@ using std::size_t;
 using std::string;
 using std::vector;
 
-// TODO: Return the system's CPU
-Processor& System::Cpu() { return cpu_; }
 
+// TODO: Return the system's CPU
+Processor& System::Cpu() {
+  return cpu_;
+}
 
 vector<Process>& System::Processes() {
   /*  Return a vector composed of the system's processes. */
@@ -24,7 +26,7 @@ vector<Process>& System::Processes() {
   std::vector<int> pids = LinuxParser::Pids();
   processes_ = {};
   processes_.reserve(pids.size());
-  for (int pid : pids) processes_.emplace_back(Process(pid));
+  for (int pid : pids) processes_.emplace_back(Process(pid, user_lookup_service));
 
   return processes_;
 }

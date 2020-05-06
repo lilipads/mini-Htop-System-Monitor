@@ -11,7 +11,7 @@ using std::string;
 using std::to_string;
 using std::vector;
 
-std::string LinuxParser::GetValueFromFile(std::string path, std::string key) {
+string LinuxParser::GetValueFromFile(std::string path, std::string key) {
   /* A helper function that retrieves the value from a file at "path"
     that is formated like key value pairs.
 
@@ -22,7 +22,7 @@ std::string LinuxParser::GetValueFromFile(std::string path, std::string key) {
   */
 
   std::ifstream filestream(path);
-  std::string line;
+  string line;
   string temp, value;
 
   if (!filestream.is_open()) return value;
@@ -126,14 +126,14 @@ long LinuxParser::UpTime() {
   /* Read and return the system uptime. */
 
   std::ifstream filestream(kProcDirectory + kUptimeFilename);
-  std::string line;
+  string line;
 
   if (filestream.is_open()) {
     std::getline(filestream, line);
     std::istringstream linestream(line);
     string uptime_seconds;
     linestream >> uptime_seconds;
-    return std::stol(uptime_seconds);
+    return stol(uptime_seconds);
   }
 
   return -1;
@@ -160,12 +160,12 @@ vector<long> LinuxParser::CpuUtilization() {
 
   const int kReturnSize = 10;
   vector<long> cpu_utlization_data;
-  std::string line;
+  string line;
   std::ifstream filestream(kProcDirectory + kStatFilename);
   if (filestream.is_open()) {
     std::getline(filestream, line);
     std::istringstream linestream(line);
-    std::string value;
+    string value;
     linestream >> value;  // take in the string "cpu"
 
     for (int i = 0; i < kReturnSize; i++) {
@@ -180,15 +180,14 @@ vector<long> LinuxParser::CpuUtilization() {
 int LinuxParser::TotalProcesses() {
   /* Read and return the total number of processes. */
 
-  std::string value =
-      GetValueFromFile(kProcDirectory + kStatFilename, "processes");
+  string value = GetValueFromFile(kProcDirectory + kStatFilename, "processes");
   return stoi(value);
 }
 
 int LinuxParser::RunningProcesses() {
   /* Read and return the number of running processes. */
 
-  std::string value =
+  string value =
       GetValueFromFile(kProcDirectory + kStatFilename, "procs_running");
   return stoi(value);
 }
@@ -197,7 +196,7 @@ string LinuxParser::Command(int pid) {
   /* Read and return the command associated with a process. */
 
   std::ifstream filestream(kProcDirectory + to_string(pid) + kCmdlineFilename);
-  std::string line;
+  string line;
   if (filestream.is_open()) std::getline(filestream, line);
   return line;
 }
@@ -205,36 +204,89 @@ string LinuxParser::Command(int pid) {
 string LinuxParser::Ram(int pid) {
   /* Read and return the memory used by a process (unit: MB). */
 
-  std::string memory_string_in_kb = GetValueFromFile(
+  string memory_string_in_kb = GetValueFromFile(
       kProcDirectory + to_string(pid) + kStatusFilename, "VmSize:");
   // convert from Kb to MB
-  return std::to_string(std::stol(memory_string_in_kb) / 1000);
+  return to_string(stol(memory_string_in_kb) / 1000);
 }
 
-string LinuxParser::Uid(int pid) {
+int LinuxParser::Uid(int pid) {
   /* Read and return the user ID associated with a process. */
 
-  return GetValueFromFile(kProcDirectory + to_string(pid) + kStatusFilename,
-                          "Uid:");
+  string uid_string = GetValueFromFile(
+      kProcDirectory + to_string(pid) + kStatusFilename, "Uid:");
+  return stoi(uid_string);
 }
 
-// TODO: Read and return the user associated with a process
-// REMOVE: [[maybe_unused]] once you define the function
-string LinuxParser::User(int pid[[maybe_unused]]) { return string(); }
+void LinuxParser::UserLookupService::BuildUserLookupTable() {
+  /* (re)build the class variable user_lookup_table hashmap with key
+      as uid and value as user name. */
+
+  user_lookup_table.clear();
+  string line, parsed_user, parsed_uid;
+
+  std::ifstream filestream(kPasswordPath);
+  if (filestream.is_open()) {
+    std::getline(filestream, line);
+    // example line: root:x:0:0:root:/root:/bin/bash
+    int idx = 0;
+
+    while (idx < (int)line.length()) {
+      char c = line[idx];
+      if (c != ':') {
+        parsed_user.push_back(c);
+        idx++;
+      } else
+        break;
+    }
+
+    idx += 3;  // skip ":x:"
+
+    bool valid_int_input = (idx < (int)line.length());
+    while (idx < (int)line.length() && valid_int_input) {
+      char c = line[idx];
+      if (c != ':') {
+        if (c > '9' || c < '0') {
+          valid_int_input = false;
+          break;
+        }
+        parsed_uid.push_back(c);
+        idx++;
+      } else {
+        break;
+      }
+    }
+
+    if (valid_int_input) user_lookup_table[stoi(parsed_uid)] = parsed_user;
+  }
+}
+
+string LinuxParser::UserLookupService::User(int uid) {
+  if (user_lookup_table.find(uid) != user_lookup_table.end())
+    return user_lookup_table[uid];
+
+  // if not found, refresh the map once (maybe new users registered while the
+  // program
+  //  is running)
+  BuildUserLookupTable();
+  if (user_lookup_table.find(uid) != user_lookup_table.end())
+    return user_lookup_table[uid];
+  else
+    return string();
+}
 
 long LinuxParser::UpTime(int pid) {
   /* Read and return the uptime of a process (unit: second). */
 
   std::ifstream filestream(kProcDirectory + to_string(pid) + kStatFilename);
   const int uptime_stat_index = 21;
-  std::string line;
-  string uptime_value;
+  string line, uptime_value;
   if (filestream.is_open()) {
     std::getline(filestream, line);
     std::istringstream linestream(line);
     for (int i = 0; i <= uptime_stat_index; i++) linestream >> uptime_value;
     // uptime is measured in clock ticks. converting to seconds.
-    return std::stol(uptime_value) / sysconf(_SC_CLK_TCK);
+    return stol(uptime_value) / sysconf(_SC_CLK_TCK);
   }
   return 0;
 }

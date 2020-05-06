@@ -4,13 +4,12 @@
 #include <string>
 #include <vector>
 
-#include "process.h"
 #include "linux_parser.h"
+#include "process.h"
 
 using std::string;
 using std::to_string;
 using std::vector;
-
 
 int Process::Pid() { return pid; }
 
@@ -21,7 +20,10 @@ string Process::Command() { return LinuxParser::Command(pid); }
 
 string Process::Ram() { return LinuxParser::Ram(pid); }
 
-string Process::User() { return LinuxParser::User(pid); }
+string Process::User() {
+  int uid = LinuxParser::Uid(pid);
+  return user_lookup_service.User(uid);
+}
 
 long int Process::UpTime() { return LinuxParser::UpTime(pid); }
 

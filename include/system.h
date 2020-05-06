@@ -18,10 +18,10 @@ class System {
   std::string Kernel();
   std::string OperatingSystem();
 
-
  private:
   Processor cpu_ = {};
   std::vector<Process> processes_ = {};
+  LinuxParser::UserLookupService user_lookup_service;
 };
 
 #endif
