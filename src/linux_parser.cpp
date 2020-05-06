@@ -11,6 +11,33 @@ using std::string;
 using std::to_string;
 using std::vector;
 
+std::string LinuxParser::GetValueFromFile(std::string path, std::string key) {
+  /* A helper function that retrieves the value from a file at "path"
+    that is formated like key value pairs.
+
+    Assumptions:
+    - no spaces in the key name.
+    - Key and value are separated by spaces.
+    - One key per line.
+  */
+
+  std::ifstream filestream(path);
+  std::string line;
+  string temp, value;
+
+  if (!filestream.is_open()) return value;
+
+  while (std::getline(filestream, line)) {
+    if (line.substr(0, key.length()) == key) {
+      std::istringstream linestream(line);
+      linestream >> temp >> value;
+      break;
+    }
+  }
+
+  return value;
+}
+
 string LinuxParser::OperatingSystem() {
   /*parse and retur the OS in pretty name, e.g. Ubuntu 16.04.6 LTS */
 
@@ -153,45 +180,17 @@ vector<long> LinuxParser::CpuUtilization() {
 int LinuxParser::TotalProcesses() {
   /* Read and return the total number of processes. */
 
-  std::ifstream filestream(kProcDirectory + kStatFilename);
-  std::string line;
-  const std::string kKey = "processes";
-
-  if (filestream.is_open()) {
-    while (std::getline(filestream, line)) {
-      if (line.substr(0, kKey.length()) == kKey) {
-        std::istringstream linestream(line);
-        string temp;
-        string value;
-        linestream >> temp >> value;
-        return std::stoi(value);
-      }
-    }
-  }
-
-  return -1;
+  std::string value =
+      GetValueFromFile(kProcDirectory + kStatFilename, "processes");
+  return stoi(value);
 }
 
 int LinuxParser::RunningProcesses() {
   /* Read and return the number of running processes. */
 
-  std::ifstream filestream(kProcDirectory + kStatFilename);
-  std::string line;
-  const std::string kKey = "procs_running";
-
-  if (filestream.is_open()) {
-    while (std::getline(filestream, line)) {
-      if (line.substr(0, kKey.length()) == kKey) {
-        std::istringstream linestream(line);
-        string temp;
-        string value;
-        linestream >> temp >> value;
-        return std::stoi(value);
-      }
-    }
-  }
-
-  return -1;
+  std::string value =
+      GetValueFromFile(kProcDirectory + kStatFilename, "procs_running");
+  return stoi(value);
 }
 
 string LinuxParser::Command(int pid) {
@@ -222,12 +221,12 @@ long LinuxParser::UpTime(int pid) {
   const int uptime_stat_index = 21;
   std::string line;
   string uptime_value;
-  if (filestream.is_open()){
+  if (filestream.is_open()) {
     std::getline(filestream, line);
     std::istringstream linestream(line);
     for (int i = 0; i <= uptime_stat_index; i++) linestream >> uptime_value;
     // uptime is measured in clock ticks. converting to seconds.
     return std::stol(uptime_value) / sysconf(_SC_CLK_TCK);
-  } 
+  }
   return 0;
 }

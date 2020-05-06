@@ -18,6 +18,9 @@ const std::string kVersionFilename{"/version"};
 const std::string kOSPath{"/etc/os-release"};
 const std::string kPasswordPath{"/etc/passwd"};
 
+// helper function
+std::string GetValueFromFile(std::string path, std::string key);
+
 // System
 float MemoryUtilization();
 long UpTime();
