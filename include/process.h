@@ -15,29 +15,30 @@ It contains relevant attributes as shown below
 class Process {
  public:
   int Pid();
-  std::string User();     // fixed for a given process
-  std::string Command();  // fixed for a given process
-
-  std::string Ram();  // dynamic
-
-  float CpuUtilization();  // dynamic
-  long int UpTime();       // dynamic. unit: second
+  std::string User();   
+  std::string Command();
+  std::string Ram(); 
+  float CpuUtilization(); 
+  long int UpTime();
   bool operator<(Process const& a) const;
   Process(int _pid, std::string _u) : pid(_pid), user(_u) {
     command = LinuxParser::Command(pid);
   };
 
  private:
+  // fixed attributes
   int pid;
+  std::string command;
+  std::string user;
+  
+  void MaybeRefreshCpuAndUptimeData();
+  static const int kRefreshInterval = 800;  // unit: millisecond
+  std::chrono::system_clock::time_point cpu_data_last_refreshed_time;
+  // dynamic attributes
+  float cpu_utilization = 0.0;
   long int process_uptime = 0;  // unit: clock ticks
   long int previous_process_uptime = 0;  // unit: clock ticks
   long int previous_process_utilized_time = 0;
-  static const int kRefreshInterval = 800;  // unit: millisecond
-  std::string command;
-  std::string user;
-  std::chrono::system_clock::time_point last_refreshed_time;
-  void MaybeRefreshCpuAndUptimeData();
-  LinuxParser::ProcessCpuUtilizationData cpu_data;
 };
 
 #endif
