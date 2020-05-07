@@ -12,12 +12,12 @@ using std::vector;
 
 string LinuxParser::GetValueFromFile(std::string path, std::string key) {
   /* A helper function that retrieves the value from a file at "path"
-    that is formated like key value pairs.
+    that is formatted like key value pairs.
 
     Assumptions:
     - no spaces in the key name.
-    - Key and value are separated by spaces.
-    - One key per line.
+    - Key and value are separated by space(s).
+    - One key-value-pair per line.
   */
 
   std::ifstream filestream(path);
@@ -38,7 +38,7 @@ string LinuxParser::GetValueFromFile(std::string path, std::string key) {
 }
 
 string LinuxParser::OperatingSystem() {
-  /*parse and retur the OS in pretty name, e.g. Ubuntu 16.04.6 LTS */
+  /* parse and return the OS in pretty name, e.g. Ubuntu 16.04.6 LTS */
 
   string line;
   string key;
@@ -117,12 +117,13 @@ float LinuxParser::MemoryUtilization() {
   std::getline(filestream, line);
   linestream.str(line);
   linestream >> key >> free_memory;
-
+  
+  if (total_memory == 0) return 0.; // falback value for division by 0
   return 1.0 - float(free_memory) / total_memory;
 }
 
 long LinuxParser::UpTime() {
-  /* Read and return the system uptime. */
+  /* Read and return the system uptime (unit: second). */
 
   std::ifstream filestream(kProcDirectory + kUptimeFilename);
   string line;

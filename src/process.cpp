@@ -14,14 +14,14 @@ using std::vector;
 int Process::Pid() { return pid; }
 
 float Process::CpuUtilization() {
-  /* Return this process's CPU utilization percentage (betwen 0 and 1).
+  /* Return this process's CPU utilization percentage (betwen 0 and 1) since the last refresh.
 
   Calculated according to:
   https://stackoverflow.com/questions/16726779/how-do-i-get-the-total-cpu-usage-of-an-application-from-proc-pid-stat/16736599#16736599
   */
 
   MaybeRefreshCpuAndUptimeData();
-  return cpu_utilization;
+  return last_refreshed_cpu_utilization;
 }
 
 string Process::Command() { return command; }
@@ -60,22 +60,24 @@ void Process::MaybeRefreshCpuAndUptimeData() {
         LinuxParser::ProcessCpuUtilization(pid);
 
     previous_process_uptime = process_uptime;
-    // how long the process has been up: system uptime (dynamic) - process
-    // start time (fixed)
+    // how long the process has been up: 
+    // system uptime (dynamic) - process start time (fixed)
     process_uptime =
         LinuxParser::UpTime() * sysconf(_SC_CLK_TCK) - cpu_data.start_time;
 
     long process_utilized_time = cpu_data.user_time + cpu_data.system_time +
                                  cpu_data.children_user_time +
                                  cpu_data.children_system_time;
-    cpu_utilization =
-        (float)(process_utilized_time - previous_process_utilized_time) /
-        (process_uptime - previous_process_uptime);
-    previous_process_utilized_time = process_utilized_time;
+    if (process_uptime - previous_process_uptime != 0){
+      last_refreshed_cpu_utilization =
+          (float)(process_utilized_time - previous_process_utilized_time) /
+          (process_uptime - previous_process_uptime);
+      previous_process_utilized_time = process_utilized_time;
+    }
+
   }
 }
 
 bool Process::operator<(Process const& a) const {
-    return pid > a.pid;
-//   return cpu_utilization < a.cpu_utilization;
+  return last_refreshed_cpu_utilization < a.last_refreshed_cpu_utilization;
 }

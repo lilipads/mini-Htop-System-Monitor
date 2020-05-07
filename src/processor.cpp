@@ -16,6 +16,7 @@ float Processor::Utilization() {
                        cpu_data[kSystem_] + cpu_data[kIRQ_] +
                        cpu_data[kSoftIRQ_] + cpu_data[kSteal_];
   long total_time = utilized_time + cpu_data[kIdle_] + cpu_data[kIOwait_];
+  if (total_time - previous_total_time == 0) return 0.0; // fallback value when it's dividing by 0.
   float cpu_utilization = float(utilized_time - previous_utilized_time) /
                           (total_time - previous_total_time);
   previous_total_time = total_time;
